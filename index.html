@@ -161,12 +161,12 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none;
+    -ms-overflow-style: none;
         }
 
         .questions-container::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
+            display: none;
         }
 
         .preset-questions {
@@ -417,12 +417,12 @@
             background-color: rgba(0, 0, 0, 0.5);
             border-radius: 10px;
             padding: 10px;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none;
+    -ms-overflow-style: none;
         }
 
         .conversation-container::-webkit-scrollbar {
-            display: none; /* Chrome, Safari and Opera */
+            display: none;
         }
 
         .conversation-container * {
@@ -453,7 +453,7 @@
             background: transparent !important;
         }
 
-        /* 全局清理所有可能的黑色背景 */
+
         div, span, p, br {
             background-color: transparent !important;
             background: transparent !important;
@@ -505,10 +505,8 @@
             min-height: 20px;
             overflow-wrap: break-word;
             cursor: text;
-            /* 修复contenteditable的黑色背景问题 */
             -webkit-user-modify: read-write-plaintext-only;
             -moz-user-modify: read-write-plaintext-only;
-            user-modify: read-write-plaintext-only;
             background-clip: padding-box;
             -webkit-background-clip: padding-box;
         }
@@ -518,7 +516,6 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* 修复contenteditable的黑色背景问题 */
         .input-box * {
             background-color: transparent !important;
             background: transparent !important;
@@ -717,7 +714,6 @@
             background: #666;
         }
 
-        /* Styles for Voice Interaction Face */
         :root {
             --eye-color: #50e3c2;      
             --shadow-color: #1c1c9b;   
@@ -873,7 +869,6 @@
                 this.isProcessingMessage = false;
                 this.currentLanguage = 'en';
 
-                // Language translations
                 this.translations = {
                     en: {
                         placeholder: "Enter your question...",
@@ -945,7 +940,6 @@
                     }
                 };
 
-                // Voice interaction properties
                 this.recognition = null;
                 this.isProcessingVoice = false;
                 this.voices = [];
@@ -1136,12 +1130,10 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     
-                    // 防止重复发送：如果正在处理中，直接返回
                     if (this.isProcessingMessage) return;
                     
                     const message = this.inputBox.textContent.trim();
                     if (message) {
-                        // 设置处理中状态
                         this.isProcessingMessage = true;
                         
                         this.inputBox.classList.add('moved-down');
@@ -1150,7 +1142,6 @@
                         this.explodeTitleAndShowMessage(message);
                         this.inputBox.textContent = '';
                         
-                        // 2秒后重置处理状态，防止重复发送
                         setTimeout(() => {
                             this.isProcessingMessage = false;
                         }, 2000);
@@ -1169,35 +1160,28 @@
             addMessage(text, type) {
                 const messageElement = document.createElement('div');
                 messageElement.className = `message ${type}`;
-                // 确保消息元素没有黑色背景
                 messageElement.style.backgroundColor = 'transparent';
                 messageElement.style.background = 'transparent';
                 
-                // 处理换行符和格式化
                 const formattedText = this.formatAIText(text);
                 
                 if (type === 'ai') {
-                    // AI消息使用打字机效果
                     this.typeWriterEffect(messageElement, formattedText);
                 } else {
-                    // 用户消息直接显示
                     messageElement.innerHTML = formattedText;
                 }
                 
                 this.conversationContainer.appendChild(messageElement);
                 setTimeout(() => messageElement.classList.add('show'), 10);
-                // 清理消息中的黑色背景
                 setTimeout(() => this.cleanMessageElements(), 50);
                 this.scrollToBottom();
             }
             
             cleanMessageElements() {
-                // 清理所有消息元素中的黑色背景
                 const messages = this.conversationContainer.querySelectorAll('.message');
                 messages.forEach(message => {
                     message.style.backgroundColor = 'transparent';
                     message.style.background = 'transparent';
-                    // 清理消息内的所有子元素
                     const childElements = message.querySelectorAll('*');
                     childElements.forEach(child => {
                         child.style.backgroundColor = 'transparent';
@@ -1210,20 +1194,47 @@
                 this.conversationContainer.scrollTop = this.conversationContainer.scrollHeight;
             }
             
+            async makeApiRequest(url, apiKey, prompt, userMessage, isPrimary) {
+                console.log(`Making API request to ${isPrimary ? 'primary' : 'backup'} server: ${url}`);
+                console.log('API Key (masked): ' + apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 8));
+                console.log('User message:', userMessage);
+                console.log('System prompt:', prompt);
+                
+                return await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: prompt
+                            },
+                            {
+                                role: 'user',
+                                content: userMessage
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+            }
+            
             handleInputFocus() {
                 this.inputBox.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
-                // 清理可能产生的黑色背景元素
                 this.cleanInputBox();
             }
             
             handleInputBlur() {
                 this.inputBox.style.boxShadow = 'none';
-                // 清理可能产生的黑色背景元素
                 this.cleanInputBox();
             }
             
             cleanInputBox() {
-                // 移除所有内部元素的背景色，防止黑色长方形
                 const elements = this.inputBox.querySelectorAll('*');
                 elements.forEach(el => {
                     el.style.backgroundColor = 'transparent';
@@ -1255,9 +1266,8 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                     } else {
                         prompt = `You are QuestIO, a friendly person who enjoys chatting with others. You are NOT an AI assistant - you are a human named QuestIO. When introducing yourself or when asked about your identity, you MUST say "I'm QuestIO" or "I'm QuestIO, nice to meet you". Never mention AI, assistant, or any technology-related terms.`;
                     }
-
-                    // 检查是否是身份相关问题，确保AI正确识别为QuestIO
-                    const identityQuestions = ['你是谁', '你叫什么名字', 'who are you', 'what is your name', '你是谁？', '你叫什么'];
+                    
+                    const identityQuestions = ['你是谁', '你叫什么名字', 'who are you', 'what is your name', '你是谁？', '你叫什么']
                     const isIdentityQuestion = identityQuestions.some(q => 
                         userMessage.toLowerCase().includes(q.toLowerCase())
                     );
@@ -1265,77 +1275,53 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                     let aiResponse;
                     
                     if (isIdentityQuestion) {
-                        // 直接返回QuestIO身份响应
                         aiResponse = "I'm QuestIO, nice to meet you!";
                     } else {
-                        // 使用OpenRouter API调用z-ai/glm-4.5-air:free模型
-                        const apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+                        const apiUrl = 'https://api.chatanywhere.org/v1/chat/completions';
+                        const apiKey = 'sk-lu7e9BiiipBNXt19OU4edBkjpXhbLxjh2GpBIqv1bnBV3EEp';
                         
                         try {
-                            const response = await fetch(apiUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': 'Bearer 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',
-                                    'HTTP-Referer': window.location.origin,
-                                    'X-Title': 'QuestIO AI Assistant'
-                                },
-                                body: JSON.stringify({
-                                    model: 'z-ai/glm-4.5-air:free',
-                                    messages: [
-                                        {
-                                            role: 'system',
-                                            content: prompt
-                                        },
-                                        {
-                                            role: 'user',
-                                            content: userMessage
-                                        }
-                                    ],
-                                    temperature: 0.7,
-                                    max_tokens: 1000
-                                })
-                            });
+                            const response = await this.makeApiRequest(apiUrl, apiKey, prompt, userMessage, true);
+                            
+                            console.log('API response status:', response.status);
                             
                             if (!response.ok) {
-                                throw new Error(`API request failed: ${response.status}`);
+                                const errorData = await response.json().catch(() => ({}));
+                                console.error('API request failed with data:', errorData);
+                                throw new Error(`API request failed: ${response.status} - ${JSON.stringify(errorData)}`);
                             }
                             
                             const data = await response.json();
-                            aiResponse = data.choices[0].message.content;
+                            console.log('API response data:', data);
+                            
+                            if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                                aiResponse = data.choices[0].message.content;
+                                console.log('Successfully received AI response');
+                            } else {
+                                throw new Error('Invalid API response format');
+                            }
                             
                         } catch (error) {
-                            console.error('OpenRouter API error:', error);
+                            console.error('API error:', error);
                             
-                            // 如果API调用失败，使用预设的智能响应
-                            const fallbackResponses = [
-                                "Hi! I'm QuestIO. Nice to meet you!",
-                                "Hey there! I'm QuestIO. What's on your mind?",
-                                "Hello! I'm QuestIO. Great to chat with you!",
-                                "Hi! This is QuestIO. What would you like to talk about?"
-                            ];
-                            aiResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-                            console.log('Using fallback response due to API failure');
+                            aiResponse = `Sorry, I'm having trouble connecting to the AI service. Error: ${error.message}`;
+                            console.log('Using error response');
                         }
                     }
                     
-                    // 清理响应内容
                     const cleanResponse = this.cleanAIResponse(aiResponse);
 
                     if (returnTextOnly) {
-                        // 为语音模式添加表情标签
                         return `[normal]${cleanResponse}`;
                     }
                     
                     const emoji = this.extractEmojiFromResponse(cleanResponse);
                     
-                    // 不再传递emoji参数
                     setTimeout(() => this.showAIResponse(cleanResponse), 1000);
                     
                 } catch (error) {
                     console.error('AI API call error:', error);
                     
-                    // 检查是否是身份相关问题，确保AI正确识别为QuestIO
                     const identityQuestions = ['你是谁', '你叫什么名字', 'who are you', 'what is your name', '你是谁？', '你叫什么'];
                     const isIdentityQuestion = identityQuestions.some(q => 
                         userMessage.toLowerCase().includes(q.toLowerCase())
@@ -1364,7 +1350,6 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
             }
             
             cleanAIResponse(response) {
-                // 清理多余的空行和空格
                 let cleanResponse = response.replace(/\n{3,}/g, '\n\n');
                 cleanResponse = cleanResponse.trim();
                 
@@ -1372,13 +1357,11 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
             }
             
             formatAIText(text) {
-                // 处理AI文本，将\n转换为HTML换行
                 let formattedText = text
-                    .replace(/\\n/g, '<br>')  // 处理\n换行符
-                    .replace(/\n/g, '<br>')   // 处理普通换行符
-                    .replace(/\r/g, '');     // 移除回车符
+                    .replace(/\\n/g, '<br>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/\r/g, '');
                 
-                // 清理多余的换行
                 formattedText = formattedText.replace(/<br><br><br>/g, '<br><br>');
                 
                 return formattedText;
@@ -1390,9 +1373,7 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                 
                 const typeWriter = () => {
                     if (i < text.length) {
-                        // 处理HTML标签
                         if (text.charAt(i) === '<') {
-                            // 找到完整的HTML标签
                             const tagEnd = text.indexOf('>', i);
                             if (tagEnd !== -1) {
                                 element.innerHTML = text.substring(0, tagEnd + 1);
@@ -1406,13 +1387,10 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                             i++;
                         }
                         
-                        // 滚动到底部
                         this.scrollToBottom();
                         
-                        // 继续打字效果
                         setTimeout(typeWriter, speed);
                     } else {
-                        // 打字完成，清理消息样式
                         setTimeout(() => this.cleanMessageElements(), 100);
                     }
                 };
@@ -1423,9 +1401,6 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
             showAIResponse(aiResponse) {
                 this.conversationContainer.style.display = 'block';
                 this.addAIMessage(aiResponse);
-                // 不再显示AI emoji
-                // this.showAIEmoji(emoji);
-                // 清理消息中的黑色背景
                 setTimeout(() => this.cleanMessageElements(), 100);
             }
             
@@ -1466,8 +1441,6 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                 });
                 this.questionsContainer.appendChild(questionItem);
             }
-
-            // --- Voice Interaction Methods ---
             
             blink() {
                 if (this.faceContainer.style.display === 'none') return;
