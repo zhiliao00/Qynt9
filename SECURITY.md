@@ -12,4 +12,4 @@
 ## Reporting a Vulnerability
 
 
-[](https://discord.gg/N5smwesgYa)](https://discord.gg/N5smwesgYa)
+(https://discord.gg/N5smwesgYa)](https://discord.gg/N5smwesgYa)
