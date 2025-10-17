@@ -442,13 +442,12 @@
             transform: translateY(20px);
             transition: all 0.5s ease-out;
             word-wrap: break-word;
-            background-color: transparent !important;
-            background: transparent !important;
+
             padding: 16px 0;
             letter-spacing: 0.3px;
         }
 
-        .message * {
+        .message > *:not(.code-block) {
             background-color: transparent !important;
             background: transparent !important;
         }
@@ -776,6 +775,158 @@
             border-radius: 50%;
             transform: scale(1.2);
         }
+
+    .code-block {
+        background: #2a2a3c;
+        border-radius: 10px;
+        margin: 12px 0;
+        overflow: hidden;
+        font-family: 'Fira Code', monospace;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .code-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1f1f2b;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        color: #ccc;
+        font-weight: 500;
+        height: auto;
+        max-height: 50px;
+    }
+
+    .code-lang {
+        color: #8ab4f8;
+        text-transform: uppercase;
+    }
+
+    .copy-button {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: #bebebe;
+        padding: 2px 6px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .copy-button:hover {
+        background: rgba(252, 252, 252, 0.2);
+        color: #8ab4f8;
+    }
+
+    .code-block pre {
+        margin: 0;
+        padding: 10px 12px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        color: #eaeaea;
+        background: transparent;
+    }
+
+    .code-block code {
+        white-space: pre;
+        display: block;
+    }
+
+    .code-block,
+    .code-block pre,
+    .code-block code {
+        background-color: #2a2a3c !important;
+    }
+
+    .code-buttons {
+        display: flex;
+        gap: 6px;
+    }
+
+    .try-button {
+        background: rgba(138, 180, 248, 0.1);
+        border: none;
+        color: #8ab4f8;
+        padding: 3px 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .try-button:hover {
+        background: rgba(138, 180, 248, 0.25);
+    }
+
+
+    .try-window {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: #1e1e2e;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        width: 70%;
+        max-width: 800px;
+        height: 500px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        opacity: 0;
+        transition: all 0.25s ease;
+        z-index: 9999;
+    }
+
+    .try-window.show {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .try-window-header {
+        background: #2b2b3d;
+        color: #ddd;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .try-window-header .try-close {
+        background: none;
+        border: none;
+        color: #aaa;
+        font-size: 1.4rem;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .try-window-header .try-close:hover {
+        color: #8ab4f8;
+    }
+
+    .try-iframe {
+        flex: 1;
+        border: none;
+        background: #ffffff;
+    }
+
+    .try-window::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #1e1e2e;
+        z-index: -1;
+    }
+
     </style>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
@@ -1355,18 +1506,78 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                 
                 return cleanResponse;
             }
-            
-            formatAIText(text) {
-                let formattedText = text
-                    .replace(/\\n/g, '<br>')
-                    .replace(/\n/g, '<br>')
-                    .replace(/\r/g, '');
-                
-                formattedText = formattedText.replace(/<br><br><br>/g, '<br><br>');
-                
-                return formattedText;
-            }
-            
+
+                formatCodeBlocks(text) {
+                    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+
+                    return text.replace(codeBlockRegex, (match, lang, code) => {
+                        const language = lang ? lang.toLowerCase() : "code";
+                        const languageLabel = language.charAt(0).toUpperCase() + language.slice(1);
+
+                        const escapedCode = code
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;");
+
+                        return `
+                            <div class="code-block" data-code="${encodeURIComponent(code)}" data-lang="${language}">
+                                <div class="code-header">
+                                    <span class="code-lang">${languageLabel}</span>
+                                    <div class="code-buttons">
+                                        <button class="copy-button">Copy</button>
+                                        ${language === "html" ? `<button class="try-button">Try</button>` : ""}
+                                    </div>
+                                </div>
+                                <pre><code class="language-${language}">${escapedCode}</code></pre>
+                                <div class="try-canvas" style="display:none;"></div>
+                            </div>
+                        `;
+                    });
+                }
+
+                formatAIText(text) {
+                    let formattedText = text
+                        .replace(/\\n/g, '\n')
+                        .replace(/\r/g, '');
+
+                    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+                    const codeBlocks = [];
+                    formattedText = formattedText.replace(codeBlockRegex, (match, lang, code) => {
+                        codeBlocks.push({ lang, code });
+                        return `[[CODE_BLOCK_${codeBlocks.length - 1}]]`;
+                    });
+
+                    formattedText = formattedText.replace(/\n/g, '<br>');
+
+                    codeBlocks.forEach((block, i) => {
+                        const language = block.lang ? block.lang.toLowerCase() : 'code';
+                        const label = language.charAt(0).toUpperCase() + language.slice(1);
+
+                        const escapedCode = block.code
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+
+                        const codeHTML = `
+                            <div class="code-block" data-code="${encodeURIComponent(block.code)}" data-lang="${language}">
+                                <div class="code-header">
+                                    <span class="code-lang">${label}</span>
+                                    <div class="code-buttons">
+                                        <button class="copy-button">Copy</button>
+                                        ${language === "html" ? `<button class="try-button">Try</button>` : ""}
+                                    </div>
+                                </div>
+                                <pre><code class="language-${language}">${escapedCode}</code></pre>
+                                <div class="try-canvas" style="display:none;"></div>
+                            </div>
+                        `;
+
+                        formattedText = formattedText.replace(`[[CODE_BLOCK_${i}]]`, codeHTML);
+                    });
+
+                    return formattedText;
+                }
+
             typeWriterEffect(element, text, speed = 30) {
                 let i = 0;
                 element.innerHTML = '';
@@ -1402,6 +1613,8 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                 this.conversationContainer.style.display = 'block';
                 this.addAIMessage(aiResponse);
                 setTimeout(() => this.cleanMessageElements(), 100);
+
+
             }
             
             showAIEmoji(emoji) {
@@ -1566,6 +1779,69 @@ Example: [normal]Hi! I'm QuestIO. [thinking]Let me think about that... [happy]Go
                 }
             }
         }
+
+            document.addEventListener('click', (event) => {
+                const copyBtn = event.target.closest('.copy-button');
+                const tryBtn = event.target.closest('.try-button');
+
+                if (copyBtn) {
+                    const block = copyBtn.closest('.code-block');
+                    if (!block) return;
+                    const code = decodeURIComponent(block.dataset.code || '');
+
+                    navigator.clipboard.writeText(code)
+                        .then(() => {
+                            copyBtn.textContent = 'Copied!';
+                            setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
+                        })
+                        .catch(() => {
+                            copyBtn.textContent = 'Error';
+                            setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
+                        });
+                }
+
+                if (tryBtn) {
+                    const block = tryBtn.closest('.code-block');
+                    if (!block) return;
+                    const lang = block.dataset.lang || 'code';
+                    const code = decodeURIComponent(block.dataset.code || '');
+
+                    if (lang !== 'html') {
+                        alert('Try is only available for HTML code.');
+                        return;
+                    }
+
+                    const tryWindow = document.createElement('div');
+                    tryWindow.className = 'try-window';
+
+                    tryWindow.innerHTML = `
+                        <div class="try-window-header">
+                            <span>HTML Preview</span>
+                            <button class="try-close">&times;</button>
+                        </div>
+                        <iframe class="try-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+                    `;
+
+                    document.body.appendChild(tryWindow);
+
+                    const iframe = tryWindow.querySelector('.try-iframe');
+                    iframe.srcdoc = code;
+
+                    setTimeout(() => tryWindow.classList.add('show'), 10);
+
+                    const closeBtn = tryWindow.querySelector('.try-close');
+                    closeBtn.addEventListener('click', () => {
+                        tryWindow.classList.remove('show');
+                        setTimeout(() => tryWindow.remove(), 300);
+                    });
+
+                    tryWindow.addEventListener('click', (e) => {
+                        if (e.target === tryWindow) {
+                            closeBtn.click();
+                        }
+                    });
+                }
+            });
 
         document.addEventListener('DOMContentLoaded', () => {
             new Sidebar();
